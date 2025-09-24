@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 入力値を取得
         const date = document.getElementById('date').value;
         const teams = document.getElementById('teams').value;
-        const league = document.getElementById('league').value.trim(); // 前後の空白を削除
+        const league = document.getElementById('league').value.trim();
         const market = document.getElementById('market').value;
         const odds = parseFloat(document.getElementById('odds').value);
         const result = document.getElementById('result').value;
@@ -43,60 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 予想データを表示する関数
     function displayPredictions() {
-        // グラフ描画のためのデータ整形
-        const leagueLabels = Object.keys(leagueSummary);
-        const winRatesData = leagueLabels.map(league => {
-            return (leagueSummary[league].wins / leagueSummary[league].totalPredictions) * 100;
-        });
-
-        const profitRatesData = leagueLabels.map(league => {
-            const profit = leagueSummary[league].totalPayout - leagueSummary[league].totalBet;
-            return (profit / leagueSummary[league].totalBet) * 100;
-        });
-
-        // グラフを描画
-        const ctx = document.getElementById('myChart').getContext('2d');
-        if (window.myChartInstance) {
-            window.myChartInstance.destroy(); // 既存のグラフがあれば破棄
-        }
-        window.myChartInstance = new Chart(ctx, {
-            type: 'bar', // 棒グラフを指定
-            data: {
-                labels: leagueLabels, // リーグ名
-                datasets: [{
-                    label: '的中率 (%)',
-                    data: winRatesData,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }, {
-                    label: '収益率 (%)',
-                    data: profitRatesData,
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'パーセント (%)'
-                        }
-                    }
-                }
-            }
-        });
-
-    } // displayPredictions() 関数の終わり
-    
-    // 以下、既存のコード...
-    displayPredictions();
-});
-
-
         // 表示エリアをクリア
         displayArea.innerHTML = '';
 
@@ -127,14 +73,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 集計
             leagueSummary[leagueName].totalPredictions++;
-            leagueSummary[leagueName].totalBet++; // 1ベットあたり1単位と仮定
-
+            leagueSummary[leagueName].totalBet++;
             if (p.result === 'win') {
                 leagueSummary[leagueName].wins++;
-                leagueSummary[leagueName].totalPayout += p.odds; // 1単位ベットで的中した場合、オッズ分の払い戻し
+                leagueSummary[leagueName].totalPayout += p.odds;
             }
         });
 
+        // グラフ描画のためのデータ整形
+        const leagueLabels = Object.keys(leagueSummary);
+        const winRatesData = leagueLabels.map(league => {
+            return ((leagueSummary[league].wins / leagueSummary[league].totalPredictions) * 100).toFixed(2);
+        });
+        const profitRatesData = leagueLabels.map(league => {
+            const profit = leagueSummary[league].totalPayout - leagueSummary[league].totalBet;
+            return ((profit / leagueSummary[league].totalBet) * 100).toFixed(2);
+        });
+
+        // グラフを描画
+        const ctx = document.getElementById('myChart');
+        if (ctx) { // canvas要素が存在するか確認
+             if (window.myChartInstance) {
+                 window.myChartInstance.destroy();
+             }
+             window.myChartInstance = new Chart(ctx, {
+                 type: 'bar',
+                 data: {
+                     labels: leagueLabels,
+                     datasets: [{
+                         label: '的中率 (%)',
+                         data: winRatesData,
+                         backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                         borderColor: 'rgba(75, 192, 192, 1)',
+                         borderWidth: 1
+                     }, {
+                         label: '収益率 (%)',
+                         data: profitRatesData,
+                         backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                         borderColor: 'rgba(153, 102, 255, 1)',
+                         borderWidth: 1
+                     }]
+                 },
+                 options: {
+                     scales: {
+                         y: {
+                             beginAtZero: true,
+                             title: {
+                                 display: true,
+                                 text: 'パーセント (%)'
+                             }
+                         }
+                     }
+                 }
+             });
+        }
+        
         // リーグごとの結果を表示するためのHTMLを作成
         const summaryHtml = Object.keys(leagueSummary).map(league => {
             const summary = leagueSummary[league];
@@ -162,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <ul id="history-list">
                 ${predictions.reverse().map(p => `
                     <li>
-                        ${p.date} - ${p.teams} (${p.league}): 
+                        ${p.date} - ${p.teams} (${p.league}):
                         <strong>${p.result === 'win' ? '的中' : '不的中'}</strong> @${p.odds}
                     </li>
                 `).join('')}
@@ -173,3 +166,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // ページロード時にデータを表示
     displayPredictions();
 });
+
