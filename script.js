@@ -43,6 +43,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 予想データを表示する関数
     function displayPredictions() {
+        // グラフ描画のためのデータ整形
+        const leagueLabels = Object.keys(leagueSummary);
+        const winRatesData = leagueLabels.map(league => {
+            return (leagueSummary[league].wins / leagueSummary[league].totalPredictions) * 100;
+        });
+
+        const profitRatesData = leagueLabels.map(league => {
+            const profit = leagueSummary[league].totalPayout - leagueSummary[league].totalBet;
+            return (profit / leagueSummary[league].totalBet) * 100;
+        });
+
+        // グラフを描画
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if (window.myChartInstance) {
+            window.myChartInstance.destroy(); // 既存のグラフがあれば破棄
+        }
+        window.myChartInstance = new Chart(ctx, {
+            type: 'bar', // 棒グラフを指定
+            data: {
+                labels: leagueLabels, // リーグ名
+                datasets: [{
+                    label: '的中率 (%)',
+                    data: winRatesData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }, {
+                    label: '収益率 (%)',
+                    data: profitRatesData,
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'パーセント (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+    } // displayPredictions() 関数の終わり
+    
+    // 以下、既存のコード...
+    displayPredictions();
+});
+
+
         // 表示エリアをクリア
         displayArea.innerHTML = '';
 
