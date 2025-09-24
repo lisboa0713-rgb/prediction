@@ -1,19 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // HTML要素を取得
     const form = document.getElementById('prediction-form');
+    const displayArea = document.getElementById('results-display');
 
-    // フォームが送信されたときの処理
+    // フォーム送信イベントのリスナーを追加
     form.addEventListener('submit', (e) => {
-        e.preventDefault(); // ページの再読み込みを防ぐ
+        e.preventDefault(); // フォームのデフォルト送信（ページ再読み込み）を防止
 
-        // フォームからデータを取得
+        // 入力値を取得
         const date = document.getElementById('date').value;
         const teams = document.getElementById('teams').value;
-        const league = document.getElementById('league').value;
+        const league = document.getElementById('league').value.trim(); // 前後の空白を削除
         const market = document.getElementById('market').value;
         const odds = parseFloat(document.getElementById('odds').value);
         const result = document.getElementById('result').value;
 
-        // 新しい予想データを作成
+        // 新しい予想データをオブジェクトとして作成
         const newPrediction = {
             date,
             teams,
@@ -23,45 +25,95 @@ document.addEventListener('DOMContentLoaded', () => {
             result
         };
 
-        // 既存のデータを取得（ローカルストレージから）
+        // ローカルストレージから既存のデータを取得。データがない場合は空の配列を初期化
         let predictions = JSON.parse(localStorage.getItem('predictions')) || [];
 
-        // 新しいデータを追加
+        // 新しいデータを配列に追加
         predictions.push(newPrediction);
 
-        // データをローカルストレージに保存
+        // 更新されたデータをローカルストレージに保存
         localStorage.setItem('predictions', JSON.stringify(predictions));
 
-        // フォームをリセット
+        // フォームをリセットして次の入力に備える
         form.reset();
 
-        // データの表示を更新
+        // 画面の表示を更新
         displayPredictions();
     });
 
-    // 既存の予想データを表示する関数
+    // 予想データを表示する関数
     function displayPredictions() {
-        const displayArea = document.getElementById('results-display');
-        displayArea.innerHTML = ''; // 表示エリアをクリア
+        // 表示エリアをクリア
+        displayArea.innerHTML = '';
 
+        // ローカルストレージからデータを取得
         const predictions = JSON.parse(localStorage.getItem('predictions')) || [];
 
+        // データがない場合のメッセージ
         if (predictions.length === 0) {
-            displayArea.innerHTML = '<p>まだ予想がありません。</p>';
+            displayArea.innerHTML = '<p>まだ予想がありません。フォームから新しい予想を記録してください。</p>';
             return;
         }
 
-        // ここに集計と表示のロジックを実装します
-        // 次回以降のステップで詳細を解説します
-        
-        // とりあえず全データをリストで表示
-        const ul = document.createElement('ul');
+        // リーグごとのデータを集計するためのオブジェクト
+        const leagueSummary = {};
+
         predictions.forEach(p => {
-            const li = document.createElement('li');
-            li.textContent = `${p.date} - ${p.teams} (${p.league}): ${p.result === 'win' ? '的中' : '不的中'} @${p.odds}`;
-            ul.appendChild(li);
+            const leagueName = p.league;
+
+            // リーグが存在しない場合は初期化
+            if (!leagueSummary[leagueName]) {
+                leagueSummary[leagueName] = {
+                    totalPredictions: 0,
+                    wins: 0,
+                    totalPayout: 0,
+                    totalBet: 0
+                };
+            }
+
+            // 集計
+            leagueSummary[leagueName].totalPredictions++;
+            leagueSummary[leagueName].totalBet++; // 1ベットあたり1単位と仮定
+
+            if (p.result === 'win') {
+                leagueSummary[leagueName].wins++;
+                leagueSummary[leagueName].totalPayout += p.odds; // 1単位ベットで的中した場合、オッズ分の払い戻し
+            }
         });
-        displayArea.appendChild(ul);
+
+        // リーグごとの結果を表示するためのHTMLを作成
+        const summaryHtml = Object.keys(leagueSummary).map(league => {
+            const summary = leagueSummary[league];
+            const winRate = (summary.wins / summary.totalPredictions) * 100;
+            const profit = summary.totalPayout - summary.totalBet;
+            const profitRate = (profit / summary.totalBet) * 100;
+
+            return `
+                <div class="league-summary">
+                    <h3>${league}</h3>
+                    <p><strong>総予想数:</strong> ${summary.totalPredictions}</p>
+                    <p><strong>的中数:</strong> ${summary.wins}</p>
+                    <p><strong>的中率:</strong> ${winRate.toFixed(2)}%</p>
+                    <p><strong>収支:</strong> ${profit.toFixed(2)}</p>
+                    <p><strong>収益率:</strong> ${profitRate.toFixed(2)}%</p>
+                </div>
+            `;
+        }).join('');
+
+        displayArea.innerHTML = `
+            <h2>リーグ別集計</h2>
+            ${summaryHtml}
+            <hr>
+            <h2>全予想履歴</h2>
+            <ul id="history-list">
+                ${predictions.reverse().map(p => `
+                    <li>
+                        ${p.date} - ${p.teams} (${p.league}): 
+                        <strong>${p.result === 'win' ? '的中' : '不的中'}</strong> @${p.odds}
+                    </li>
+                `).join('')}
+            </ul>
+        `;
     }
 
     // ページロード時にデータを表示
