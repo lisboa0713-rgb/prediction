@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サッカー予想管理アプリ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>サッカー予想管理</h1>
+
+    <div class="input-form">
+        <h2>新しい予想を追加</h2>
+        <form id="prediction-form">
+            <div class="form-group">
+                <label for="date">日時:</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="teams">対戦相手:</label>
+                <input type="text" id="teams" placeholder="例: 日本 vs ドイツ" required>
+            </div>
+            <div class="form-group">
+                <label for="league">リーグ名:</label>
+                <input type="text" id="league" placeholder="例: J1リーグ" required>
+            </div>
+            <div class="form-group">
+                <label for="market">マーケット項目:</label>
+                <input type="text" id="market" placeholder="例: 勝ち" required>
+            </div>
+            <div class="form-group">
+                <label for="odds">オッズ:</label>
+                <input type="number" id="odds" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="result">結果:</label>
+                <select id="result" required>
+                    <option value="">選択してください</option>
+                    <option value="win">的中</option>
+                    <option value="lose">不的中</option>
+                </select>
+            </div>
+            <button type="submit">記録</button>
+        </form>
+    </div>
+
+    <div id="results-display"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
