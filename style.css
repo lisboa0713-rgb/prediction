@@ -86,4 +86,8 @@ button:hover {
 #history-list li:last-child {
     border-bottom: none;
 }
+.chart-container {
+    max-width: 600px;
+    margin: 20px auto;
+}
 
